@@ -16,6 +16,7 @@ from handlers import (
     select_food,
     new_refrigerator,
     text_handler,
+    add_ingredient,
 )
 
 # Load environment variables from .env file
@@ -33,6 +34,7 @@ new_app = ApplicationBuilder().token(bot_token).build()
 new_app.add_handler(CommandHandler("newcuisine", new_cuisine))
 new_app.add_handler(CommandHandler("newrefrigerator", new_refrigerator))
 new_app.add_handler(CommandHandler("additem", add_item))
+new_app.add_handler(CommandHandler("addingredient", add_ingredient))
 new_app.add_handler(CommandHandler("editrecipe", edit_recipe))
 new_app.add_handler(CommandHandler("ecocuisine", eco_cuisine))
 new_app.add_handler(CommandHandler("selectfood", select_food))
