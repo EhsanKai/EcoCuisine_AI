@@ -1,6 +1,10 @@
 # Environment variables
 .env
 
+# User databases (contain personal data)
+user_databases/
+*.db
+
 # Python
 __pycache__/
 *.py[cod]
