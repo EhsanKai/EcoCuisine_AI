@@ -1,19 +1,4 @@
 from telegram import Update
-from telegram.ext import ContextTypes, MessageHandler, filters
-import sys
-import os
-
-# Add the DBs folder to the path so we can import our database classes
-sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), 'DBs'))
-from refrigerator_db import RefrigeratorDB
-from cuisine_db import CuisineDB
-
-# Initialize the database handlers
-fridge_db = RefrigeratorDB()
-cuisine_db = CuisineDB()
-
-# Store user states for conversation flow
-user_states = {}am import Update
 from telegram.ext import ContextTypes
 import sys
 import os
@@ -21,20 +6,76 @@ import os
 # Add the DBs folder to the path so we can import our database classes
 sys.path.append(os.path.join(os.path.dirname(os.path.dirname(__file__)), "DBs"))
 from refrigerator_db import RefrigeratorDB
+from cuisine_db import CuisineDB
 
-# Initialize the refrigerator database handler
+# Initialize the database handlers
 fridge_db = RefrigeratorDB()
+cuisine_db = CuisineDB()
 
 
 # Define a command handler function
 async def new_cuisine(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    await update.message.reply_text(f"Hello {update.effective_user.first_name}")
+    """Handle the /newcuisine command"""
+    user_id = update.effective_user.id
+    user_name = update.effective_user.first_name
+
+    # Create user folder if it doesn't exist
+    folder_created = cuisine_db.create_user_folder(user_id)
+
+    # Check if user already has cuisine databases
+    if cuisine_db.user_has_cuisines(user_id):
+        # Load existing cuisines and show them
+        cuisines = cuisine_db.get_cuisines(user_id)
+
+        if not cuisines:
+            message = f"🍳 Welcome back to your cuisine collection, {user_name}!\n\n"
+            message += "You don't have any cuisines yet.\n"
+            message += (
+                "Let's create your first cuisine! What would you like to name it?"
+            )
+        else:
+            message = f"🍳 Welcome back to your cuisine collection, {user_name}!\n\n"
+            message += "📋 Your existing cuisines:\n\n"
+
+            for cuisine in cuisines:
+                cuisine_id, cuisine_name, description, _ = cuisine
+                message += f"• {cuisine_name} (ID: {cuisine_id})"
+                if description:
+                    message += f" - {description}"
+                message += "\n"
+
+            message += f"\n📊 Total cuisines: {len(cuisines)}"
+            message += "\n\nType the name of a new cuisine to create it!"
+    else:
+        # Create new cuisine databases
+        success = cuisine_db.create_cuisine_databases(user_id)
+
+        if success:
+            if folder_created:
+                message = f"🎉 Congratulations, {user_name}!\n\n"
+                message += "📁 Your personal folder has been created!\n"
+            else:
+                message = f"🎉 Welcome back, {user_name}!\n\n"
+
+            message += "🍳 Your cuisine databases have been created successfully!\n\n"
+            message += "You can now:\n"
+            message += "• Type a cuisine name to create your first cuisine\n"
+            message += "• Use /newcuisine to view your cuisines\n"
+            message += "• Use /newrefrigerator to manage your refrigerator"
+        else:
+            message = f"❌ Sorry {user_name}, there was an error creating your cuisine databases.\n"
+            message += "Please try again later."
+
+    await update.message.reply_text(message)
 
 
 async def new_refrigerator(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     """Handle the /newrefrigerator command"""
     user_id = update.effective_user.id
     user_name = update.effective_user.first_name
+
+    # Create user folder if it doesn't exist
+    folder_created = fridge_db.create_user_folder(user_id)
 
     # Check if user already has a refrigerator
     if fridge_db.user_has_refrigerator(user_id):
@@ -71,12 +112,17 @@ async def new_refrigerator(update: Update, context: ContextTypes.DEFAULT_TYPE) -
                 update.effective_user.last_name,
             )
 
-            message = f"🎉 Congratulations, {user_name}!\n\n"
+            if folder_created:
+                message = f"🎉 Congratulations, {user_name}!\n\n"
+                message += "📁 Your personal folder has been created!\n"
+            else:
+                message = f"🎉 Welcome back, {user_name}!\n\n"
+
             message += "🧊 Your new refrigerator has been created successfully!\n\n"
             message += "You can now:\n"
             message += "• Use /additem to add items to your refrigerator\n"
             message += "• Use /newrefrigerator to view your items\n"
-            message += "• Use /ecocuisine to get eco-friendly recipe suggestions"
+            message += "• Use /newcuisine to manage your cuisines"
         else:
             message = f"❌ Sorry {user_name}, there was an error creating your refrigerator.\n"
             message += "Please try again later."

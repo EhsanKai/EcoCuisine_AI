@@ -8,7 +8,15 @@ from telegram.ext import (
 )
 from os import environ
 from dotenv import load_dotenv
-from handlers import new_cuisine, add_item, edit_recipe, eco_cuisine, select_food, new_refrigerator
+from handlers import (
+    new_cuisine,
+    add_item,
+    edit_recipe,
+    eco_cuisine,
+    select_food,
+    new_refrigerator,
+    text_handler,
+)
 
 # Load environment variables from .env file
 load_dotenv()
@@ -28,6 +36,9 @@ new_app.add_handler(CommandHandler("additem", add_item))
 new_app.add_handler(CommandHandler("editrecipe", edit_recipe))
 new_app.add_handler(CommandHandler("ecocuisine", eco_cuisine))
 new_app.add_handler(CommandHandler("selectfood", select_food))
+
+# Add text message handler for cuisine creation
+new_app.add_handler(text_handler)
 
 # Start the bot
 new_app.run_polling()
